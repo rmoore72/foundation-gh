@@ -1,58 +1,14 @@
-steps:
-  - name: 'hashicorp/terraform:1.10.0'
-    args:
-      - '-c'
-      - |
-        set -x && \
-          export TF_VAR_env=${_BASE_BRANCH}
-          export TF_VAR_tf_state_bucket_name=terraform-state-$PROJECT_ID
-          export TF_VAR_tf_state_bucket_path=terraform/$REPO_NAME/${_BASE_BRANCH}
-          terraform -chdir=./src init \
-            -backend-config "bucket=$$TF_VAR_tf_state_bucket_name" \
-            -backend-config "prefix=$$TF_VAR_tf_state_bucket_path"
-    id: Terraform INIT
-    entrypoint: sh
-  - name: 'hashicorp/terraform:1.10.0'
-    args:
-      - '-c'
-      - |
-        set -x && \
-          export TF_VAR_env=${_BASE_BRANCH}
-          export TF_VAR_tf_state_bucket_name=terraform-state-$PROJECT_ID
-          export TF_VAR_tf_state_bucket_path=terraform/${REPO_NAME}/${_BASE_BRANCH}
-          terraform -chdir=src plan \
-            -input=false \
-            -out=/workspace/tf_apply.plan.tfplan -no-color
-    id: Terraform PLAN
-    entrypoint: sh
-  - name: 'hashicorp/terraform:1.10.0'
-    args:
-      - '-c'
-      - |
-        set -x && \
-          terraform -chdir=src apply /workspace/tf_apply.plan.tfplan -no-color
-    id: Terraform APPLY
-    entrypoint: sh
-  - name: 'hashicorp/terraform:1.10.0'
-    args:
-      - '-c'
-      - |
-        set -x && \
-          terraform -chdir=./src output >/workspace/${COMMIT_SHA}.json -json
-    id: Terraform OUTPUT
-    entrypoint: sh
-  - name: gcr.io/cloud-builders/gcloud
-    args:
-      - '-c'
-      - 'cp /workspace/${COMMIT_SHA}.json /workspace/latest.json'
-    id: Duplicate Terraform output as latest.json
-    entrypoint: bash
-timeout: 5400s
-options:
-  logging: CLOUD_LOGGING_ONLY
-artifacts:
-  objects:
-    location: 'gs://terraform-state-${PROJECT_ID}/outputs/$REPO_NAME/env/${_BASE_BRANCH}'
-    paths:
-      - latest.json
-      - '${COMMIT_SHA}.json'
+- id: 'tf apply'
+  name: 'hashicorp/terraform:1.0.0'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - | 
+      if [ -d "environments/$BRANCH_NAME/" ]; then
+        cd environments/$BRANCH_NAME      
+        terraform apply -auto-approve
+      else
+        echo "***************************** SKIPPING APPLYING *******************************"
+        echo "Branch '$BRANCH_NAME' does not represent an official environment."
+        echo "*******************************************************************************"
+      fi

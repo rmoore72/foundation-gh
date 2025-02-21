@@ -1,32 +1,23 @@
-steps:
-  - name: 'hashicorp/terraform:1.10.0'
-    args:
-      - '-c'
-      - |
-        set -x && \
-          export TF_VAR_env=${_BASE_BRANCH} && \
-          export TF_VAR_tf_state_bucket_name=terraform-state-$PROJECT_ID \
-          export TF_VAR_tf_state_bucket_path=terraform/${REPO_NAME}/${_BASE_BRANCH}
-          terraform -chdir=./src init \
-            -backend-config "bucket=$$TF_VAR_tf_state_bucket_name" \
-            -backend-config "prefix=$$TF_VAR_tf_state_bucket_path"
-    id: Terraform INIT
-    entrypoint: sh
-  - name: 'hashicorp/terraform:1.10.0'
-    args:
-      - '-c'
-      - |
-        set -x && \
-          export TF_VAR_env=${_BASE_BRANCH}
-          export TF_VAR_tf_state_bucket_name=terraform-state-$PROJECT_ID
-          export TF_VAR_tf_state_bucket_path=terraform/${REPO_NAME}/${_BASE_BRANCH}
-          terraform -chdir=src plan \
-            -input=false \
-            -out=/workspace/$COMMIT_SHA-apply.plan.tfplan -no-color
-    id: Terraform PLAN
-    entrypoint: sh
-timeout: 2700s
-options:
-  logging: CLOUD_LOGGING_ONLY
-
-
+- id: 'tf plan'
+  name: 'hashicorp/terraform:1.0.0'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - | 
+      if [ -d "environments/$BRANCH_NAME/" ]; then
+        cd environments/$BRANCH_NAME
+        terraform plan
+      else
+        for dir in environments/*/
+        do 
+          cd ${dir}   
+          env=${dir%*/}
+          env=${env#*/}  
+          echo ""
+          echo "*************** TERRAFORM PLAN ******************"
+          echo "******* At environment: ${env} ********"
+          echo "*************************************************"
+          terraform plan || exit 1
+          cd ../../
+        done
+      fi 
