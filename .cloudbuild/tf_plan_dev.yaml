@@ -4,9 +4,9 @@ steps:
       - '-c'
       - |
         set -x && \
-          export TF_VAR_env=${BRANCH_NAME} && \
+          export TF_VAR_env=${_BASE_BRANCH} && \
           export TF_VAR_tf_state_bucket_name=terraform-state-$PROJECT_ID \
-          export TF_VAR_tf_state_bucket_path=terraform/${REPO_NAME}/${BRANCH_NAME}
+          export TF_VAR_tf_state_bucket_path=terraform/${REPO_NAME}/${_BASE_BRANCH}
           terraform -chdir=./src init \
             -backend-config "bucket=$$TF_VAR_tf_state_bucket_name" \
             -backend-config "prefix=$$TF_VAR_tf_state_bucket_path"
@@ -17,9 +17,9 @@ steps:
       - '-c'
       - |
         set -x && \
-          export TF_VAR_env=${BRANCH_NAME}
+          export TF_VAR_env=${_BASE_BRANCH}
           export TF_VAR_tf_state_bucket_name=terraform-state-$PROJECT_ID
-          export TF_VAR_tf_state_bucket_path=terraform/${REPO_NAME}/${BRANCH_NAME}
+          export TF_VAR_tf_state_bucket_path=terraform/${REPO_NAME}/${_BASE_BRANCH}
           terraform -chdir=src plan \
             -input=false \
             -out=/workspace/$COMMIT_SHA-apply.plan.tfplan -no-color
