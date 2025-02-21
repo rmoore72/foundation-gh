@@ -21,3 +21,6 @@
           cd ../../
         done
       fi 
+
+
+#^(feature|hotfix)\/dev\/[^\/]+$
