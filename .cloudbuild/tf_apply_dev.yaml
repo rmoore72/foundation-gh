@@ -4,9 +4,9 @@ steps:
       - '-c'
       - |
         set -x && \
-          export TF_VAR_env=${REF_NAME}
+          export TF_VAR_env=${BRANCH_NAME}
           export TF_VAR_tf_state_bucket_name=terraform-state-$PROJECT_ID
-          export TF_VAR_tf_state_bucket_path=terraform/$REPO_NAME/${REF_NAME}
+          export TF_VAR_tf_state_bucket_path=terraform/$REPO_NAME/${BRANCH_NAME}
           terraform -chdir=./src init \
             -backend-config "bucket=$$TF_VAR_tf_state_bucket_name" \
             -backend-config "prefix=$$TF_VAR_tf_state_bucket_path"
@@ -17,9 +17,9 @@ steps:
       - '-c'
       - |
         set -x && \
-          export TF_VAR_env=${REF_NAME}
+          export TF_VAR_env=${BRANCH_NAME}
           export TF_VAR_tf_state_bucket_name=terraform-state-$PROJECT_ID
-          export TF_VAR_tf_state_bucket_path=terraform/${REPO_NAME}/${REF_NAME}
+          export TF_VAR_tf_state_bucket_path=terraform/${REPO_NAME}/${BRANCH_NAME}
           terraform -chdir=src plan \
             -input=false \
             -out=/workspace/tf_apply.plan.tfplan -no-color
@@ -52,7 +52,7 @@ options:
   logging: CLOUD_LOGGING_ONLY
 artifacts:
   objects:
-    location: 'gs://terraform-state-${PROJECT_ID}/outputs/$REPO_NAME/env/${REF_NAME}'
+    location: 'gs://terraform-state-${PROJECT_ID}/outputs/$REPO_NAME/env/${BRANCH_NAME}'
     paths:
       - latest.json
       - '${COMMIT_SHA}.json'
